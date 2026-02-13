@@ -1,0 +1,4 @@
+ADD 10 20
+MUL 5
+SUB 30 5 10
+DIV 8 dois
