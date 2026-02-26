@@ -1,115 +1,160 @@
-def validar_linha(linha, numero_linha):
-    """
-    Valida uma linha de código CalcLang.
-    Retorna (True, None) se válida ou (False, mensagem_erro) se inválida.
-    """
+def validar_sintaxe(linha, numero_linha):
     partes = linha.strip().split()
-    
-    # Verifica se tem exatamente 3 elementos
-    if len(partes) != 3:
-        return False, f"Erro na linha {numero_linha}"
-    
-    operacao, num1, num2 = partes
-    
-    # Verifica se a operação é válida
-    operacoes_validas = ['ADD', 'SUB', 'MUL', 'DIV']
-    if operacao not in operacoes_validas:
-        return False, f"Erro na linha {numero_linha}"
-    
-    # Verifica se os dois últimos elementos são números
-    try:
-        float(num1)
-        float(num2)
-    except ValueError:
-        return False, f"Erro na linha {numero_linha}"
-    
+
+    if not partes:
+        return False, f"Erro sintático na linha {numero_linha}"
+
+    comando = partes[0]
+
+    comandos_validos = ['SET', 'ADD', 'SUB', 'MUL', 'DIV', 'PRINT']
+
+    if comando not in comandos_validos:
+        return False, f"Erro sintático na linha {numero_linha}"
+
+    # SET nome numero
+    if comando == 'SET':
+        if len(partes) != 3:
+            return False, f"Erro sintático na linha {numero_linha}"
+
+    # PRINT nome
+    elif comando == 'PRINT':
+        if len(partes) != 2:
+            return False, f"Erro sintático na linha {numero_linha}"
+
+    # Operações aritméticas
+    else:
+        if len(partes) != 3:
+            return False, f"Erro sintático na linha {numero_linha}"
+
     return True, None
 
 
-def traduzir_para_python(linha):
-    """
-    Traduz uma linha de CalcLang para Python.
-    """
-    partes = linha.strip().split()
-    operacao, num1, num2 = partes
-    
-    mapeamento_operacoes = {
-        'ADD': '+',
-        'SUB': '-',
-        'MUL': '*',
-        'DIV': '/'
-    }
-    
-    operador = mapeamento_operacoes[operacao]
-    return f"print({num1} {operador} {num2})"
+def validar_nome_variavel(nome):
+    palavras_reservadas = ['SET', 'ADD', 'SUB', 'MUL', 'DIV', 'PRINT']
+
+    if not nome.isalpha():
+        return False
+
+    if nome in palavras_reservadas:
+        return False
+
+    return True
+
+
+def validar_semantica(partes, numero_linha, tabela_simbolos):
+    comando = partes[0]
+
+    # SET nome numero
+    if comando == 'SET':
+        nome = partes[1]
+        valor = partes[2]
+
+        if not validar_nome_variavel(nome):
+            return False, f"Erro semântico na linha {numero_linha}: nome de variável inválido"
+
+        try:
+            float(valor)
+        except ValueError:
+            return False, f"Erro semântico na linha {numero_linha}: valor inválido"
+
+        tabela_simbolos[nome] = valor
+
+    # PRINT nome
+    elif comando == 'PRINT':
+        nome = partes[1]
+
+        if nome not in tabela_simbolos:
+            return False, f"Erro semântico na linha {numero_linha}: variável '{nome}' não declarada"
+
+    # Operações
+    else:
+        op1 = partes[1]
+        op2 = partes[2]
+
+        for operando in [op1, op2]:
+            if not operando.replace('.', '', 1).isdigit():
+                if operando not in tabela_simbolos:
+                    return False, f"Erro semântico na linha {numero_linha}: variável '{operando}' não declarada"
+
+    return True, None
+
+
+def traduzir_para_python(partes):
+    comando = partes[0]
+
+    if comando == 'SET':
+        return f"{partes[1]} = {partes[2]}"
+
+    elif comando == 'PRINT':
+        return f"print({partes[1]})"
+
+    else:
+        mapeamento = {
+            'ADD': '+',
+            'SUB': '-',
+            'MUL': '*',
+            'DIV': '/'
+        }
+
+        operador = mapeamento[comando]
+        return f"print({partes[1]} {operador} {partes[2]})"
 
 
 def processar_arquivo(arquivo_entrada):
-    """
-    Processa o arquivo de entrada em CalcLang e gera o arquivo de saída em Python.
-    """
     try:
-        # Lê o arquivo de entrada
         with open(arquivo_entrada, 'r', encoding='utf-8') as f:
             linhas = f.readlines()
-        
-        # Lista para armazenar as linhas traduzidas
+
+        tabela_simbolos = {}
         linhas_python = []
-        erro_encontrado = False
-        
-        # Processa cada linha
+
         for i, linha in enumerate(linhas, start=1):
-            # Ignora linhas vazias
             if linha.strip() == '':
                 continue
-            
-            # Valida a linha
-            valido, mensagem_erro = validar_linha(linha, i)
-            
-            if not valido:
-                print(mensagem_erro)
-                erro_encontrado = True
-                break
-            
-            # Traduz a linha para Python
-            linha_python = traduzir_para_python(linha)
+
+            valido_sintaxe, erro = validar_sintaxe(linha, i)
+            if not valido_sintaxe:
+                print(erro)
+                return None
+
+            partes = linha.strip().split()
+
+            valido_semantica, erro = validar_semantica(partes, i, tabela_simbolos)
+            if not valido_semantica:
+                print(erro)
+                return None
+
+            linha_python = traduzir_para_python(partes)
             linhas_python.append(linha_python)
-        
-        # Se não houve erros, gera o arquivo de saída
-        if not erro_encontrado:
-            arquivo_saida = arquivo_entrada.replace('.txt', '_output.py')
-            with open(arquivo_saida, 'w', encoding='utf-8') as f:
-                for linha in linhas_python:
-                    f.write(linha + '\n')
-            
-            print(f"Tradução concluída! Arquivo gerado: {arquivo_saida}")
-            return arquivo_saida
-        
-        return None
-    
+
+        arquivo_saida = arquivo_entrada.replace('.txt', '_output.py')
+
+        with open(arquivo_saida, 'w', encoding='utf-8') as f:
+            for linha in linhas_python:
+                f.write(linha + '\n')
+
+        print(f"Tradução concluída! Arquivo gerado: {arquivo_saida}")
+        return arquivo_saida
+
     except FileNotFoundError:
         print(f"Erro: Arquivo '{arquivo_entrada}' não encontrado.")
         return None
+
     except Exception as e:
-        print(f"Erro ao processar arquivo: {e}")
+        print(f"Erro inesperado: {e}")
         return None
 
 
 def main():
-    """
-    Função principal do tradutor.
-    """
-    print("=== Tradutor CalcLang para Python ===\n")
-    
-    # Solicita o nome do arquivo de entrada
-    arquivo_entrada = input("Digite o nome do arquivo de entrada (ex: input.txt): ")
-    
-    # Processa o arquivo
-    arquivo_saida = processar_arquivo(arquivo_entrada)
-    
-    if arquivo_saida:
-        print("\n--- Conteúdo do arquivo gerado ---")
-        with open(arquivo_saida, 'r', encoding='utf-8') as f:
+    print("=== Compilador CalcLang 2.0 ===\n")
+
+    arquivo = input("Digite o nome do arquivo de entrada: ")
+
+    resultado = processar_arquivo(arquivo)
+
+    if resultado:
+        print("\n--- Código Python Gerado ---")
+        with open(resultado, 'r', encoding='utf-8') as f:
             print(f.read())
 
 
