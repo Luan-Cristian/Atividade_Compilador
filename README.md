@@ -1,7 +1,7 @@
-🧠 CalcLang 2.0 Compiler — Tradutor para Python
+ CalcLang 2.0 Compiler — Tradutor para Python
 Projeto desenvolvido para a disciplina de Compiladores, com o objetivo de simular as principais fases de um compilador através da implementação de um mini compilador da linguagem fictícia CalcLang 2.0.
 
-🎯 Objetivo
+ Objetivo
 Estender um tradutor simples implementado anteriormente, adicionando:
 ✔ Tabela de Símbolos
 ✔ Análise Semântica
@@ -9,7 +9,7 @@ Estender um tradutor simples implementado anteriormente, adicionando:
 ✔ Separação entre análise sintática e semântica
 ✔ Geração de código Python equivalente
 
-🏗 Arquitetura do Compilador
+ Arquitetura do Compilador
 O sistema foi dividido em três etapas principais:
 
 1️⃣ Análise Sintática
@@ -21,51 +21,51 @@ Uso de variáveis não declaradas
 Nome válido de identificadores
 Correção semântica das instruções
 
-3️⃣ Geração de Código
+Geração de Código
 Tradução das instruções válidas para código Python.
 
-📘 Linguagem CalcLang 2.0
+Linguagem CalcLang 2.0
 
-🔹 Declaração de variável
+Declaração de variável
 SET nome numero
 
-🔹 Operações aritméticas
+Operações aritméticas
 ADD op1 op2
 SUB op1 op2
 MUL op1 op2
 DIV op1 op2
 
-🔹 Impressão
+Impressão
 PRINT nome
 
-📜 Regras
+Regras
 Variáveis devem ser declaradas antes do uso.
 Nome da variável deve conter apenas letras.
 Não pode usar palavras reservadas.
 Operações não alteram variáveis.
 PRINT aceita apenas variáveis declaradas.
 
-📥 Exemplo de Entrada
+Exemplo de Entrada
 SET a 10
 SET b 5
 ADD a b
 PRINT a
 
-📤 Saída Gerada
+Saída Gerada
 a = 10
 b = 5
 print(a + b)
 print(a)
 
-❌ Exemplo de Erro
+Exemplo de Erro
 ADD a 10
 Saída:
 Erro semântico na linha 1: variável 'a' não declarada
 
-🚀 Execução
+Execução
 python compilador.py
 
-📚 Conceitos Aplicados
+Conceitos Aplicados
 Análise Sintática
 Análise Semântica
 Tabela de Símbolos
